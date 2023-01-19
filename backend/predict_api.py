@@ -9,14 +9,15 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 app = Flask(__name__)
 CORS(app)
 
-@app.route('/getRec', methods=['GET'])
+@app.route('/getRecs', methods=['GET'])
 def get_recommendation():
+  global distances
   type = request.args.get('type')
-  type = type.trim().split(",")
+  type = type.split(",")
   flavors = request.args.get('flavors')
-  flavors = flavors.trim().split(",")
+  flavors = flavors.split(",")
   effects = request.args.get('effects')
-  effects = effects.trim().split(",")
+  effects = effects.split(",")
 
   # Creating user req string with all requested params
   for t in type:
@@ -32,13 +33,17 @@ def get_recommendation():
   user_req = user_req.lower()
   user_req = np.asarray([user_req])
   
-  distances, indices = knn.kneighbors((tfidf.transform(user_req)).todense())
-  
+  dists, indices = knn.kneighbors((tfidf.transform(user_req)).todense())
+  distances = dists
   # Changing dimension of indices array from 2 to 1
   indices = indices[0]
   
   return str(strain_data.iloc[indices]['Strain'].values)
 
+  
+@app.route('/getDists', methods=['GET'])
+def get_distances():
+  return str(distances)
 
 
 if __name__ == "__main__":
@@ -54,7 +59,8 @@ if __name__ == "__main__":
   
   file.close()
   
-  app.run(debug=True, port=5000)
+  
+  app.run(debug=False, port=5000)
 
   
   
